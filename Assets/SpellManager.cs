@@ -10,6 +10,7 @@ public class SpellManager : MonoBehaviour
         public KeyCode[] sequence = new KeyCode[0];
         public GameObject spellPrefab;
         public float spellDuration = 2f;
+        public float damageAmount = 10f;
 
         [Header("Optional effects")]
         public float cooldownSeconds = 0f;
@@ -45,7 +46,7 @@ public class SpellManager : MonoBehaviour
     }
 
     // Try to execute a spell by name; check cooldown and spawn
-    public bool TryExecuteSpell(string spellName)
+    public bool TryExecuteSpell(string spellName, GameObject receiver)
     {
         // find spell entry
         var entry = FindSpellByName(spellName);
@@ -65,7 +66,7 @@ public class SpellManager : MonoBehaviour
 
         // execute
         entry.lastExecutedTime = Time.time;
-        TriggerAnimation.Spawn(entry.spellPrefab, spawnPosition, entry.spellDuration);
+        TriggerAnimation.Spawn(entry.spellPrefab, spawnPosition, entry.spellDuration, receiver, entry.damageAmount);
         Debug.LogFormat("SpellManager: executed spell '{0}'", spellName);
         return true;
     }

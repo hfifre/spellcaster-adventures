@@ -4,7 +4,7 @@ public class TriggerAnimation : MonoBehaviour
 {
     // Static helper to spawn a spell prefab and schedule destruction.
     // If the prefab has a SpellBeheviour component, calls Trigger(); otherwise just destroys after duration.
-    public static GameObject Spawn(GameObject prefab, Vector3 position, float duration)
+    public static GameObject Spawn(GameObject prefab, Vector3 position, float duration, GameObject receiver, float damageAmount = 0f)
     {
         if (prefab == null)
         {
@@ -29,6 +29,20 @@ public class TriggerAnimation : MonoBehaviour
             }
         }
 
+        // Apply damage to receiver if it has UserManager component
+        if (receiver != null)
+        {
+            var userManager = receiver.GetComponent<UserManager>();
+            if (userManager != null)
+            {
+                userManager.UpdateHealth(damageAmount);
+            }
+            else
+            {
+                Debug.LogWarning("TriggerAnimation.Spawn: receiver GameObject does not have UserManager component.");
+            }
+        }
+
         // Schedule destruction after duration
         Destroy(instance, duration);
 
@@ -36,8 +50,8 @@ public class TriggerAnimation : MonoBehaviour
     }
 
     // Instance wrapper (optional) so you can call from inspector-linked components
-    public GameObject SpawnInstance(GameObject prefab, Vector3 position, float duration)
+    public GameObject SpawnInstance(GameObject prefab, Vector3 position, float duration, GameObject receiver = null, float damageAmount = 0f)
     {
-        return Spawn(prefab, position, duration);
+        return Spawn(prefab, position, duration, receiver, damageAmount);
     }
 }

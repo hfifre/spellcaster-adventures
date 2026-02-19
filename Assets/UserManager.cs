@@ -5,6 +5,11 @@ using TMPro;
 
 public class UserManager : MonoBehaviour
 {
+    [Tooltip("Reference to the HUDManager to update health bar and other UI elements.")]
+    [SerializeField] private HUDManager hudManager;
+    private float currentHealth = 100f;
+    private float maxHealth = 100f;
+
     [Tooltip("Seconds allowed between key presses before progress resets")]
     public float inputTimeout = 1f;
 
@@ -115,6 +120,16 @@ public class UserManager : MonoBehaviour
         }
     }
 
+    public void UpdateHealth(float damage)
+    {
+        currentHealth -= damage;
+        if (currentHealth < 0f) currentHealth = 0f;
+        if (hudManager != null)
+        {
+            hudManager.UpdateHealthBar(currentHealth, maxHealth);
+        }
+    }
+
     void HandlePressed(KeyCode pressed)
     {
         Debug.Log("HandlePressed: " + pressed);
@@ -143,7 +158,7 @@ public class UserManager : MonoBehaviour
                 if (st.index >= spell.sequence.Length)
                 {
                     Debug.LogFormat("Sequence for spell '{0}' complete", spell.spellName);
-                    spellManager.TryExecuteSpell(spell.spellName);
+                    spellManager.TryExecuteSpell(spell.spellName, this.gameObject);
                     st.index = 0;
                 }
             }
