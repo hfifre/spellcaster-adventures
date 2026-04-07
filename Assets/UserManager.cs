@@ -7,17 +7,26 @@ public class UserManager : MonoBehaviour
 {
     [Tooltip("Reference to the HUDManager to update health bar and other UI elements.")]
     [SerializeField] private HUDManager hudManager;
+    
+    [Tooltip("Reference to the CharacterAnimator for animation control.")]
+    [SerializeField] private CharacterAnimator characterAnimator;
+    
+    [Tooltip("Reference to the WeaponManager for weapon management.")]
+    [SerializeField] private WeaponManager weaponManager;
+
     private float currentHealth = 100f;
     private float maxHealth = 100f;
+
+    // Weapon state
+    private bool weaponInvoked = false;
+    private bool combatStarted = false;
+    private Weapon currentWeapon = null;
 
     [Tooltip("Seconds allowed between key presses before progress resets")]
     public float inputTimeout = 1f;
 
     [Tooltip("Assign your InputActionAsset (UserActions.inputactions) here. The script will use the 'combat' map and its Up/Down/Left/Right actions.")]
     public InputActionAsset inputActions;
-
-    [Tooltip("Assign the SpellManager instance that manages all spells and their sequences.")]
-    public SpellManager spellManager;
 
     // InputAction references (populated when asset is assigned)
     InputActionMap combatMap;
@@ -27,43 +36,54 @@ public class UserManager : MonoBehaviour
     [Tooltip("Optional TextMeshPro UI element to display configured sequences and progress.")]
     public TMP_Text sequenceText;
 
-    // runtime state for each configured sequence
-    class SequenceState { public int index; public float lastInputTime; }
-    SequenceState[] sequenceStates = new SequenceState[0];
+    // Invocation pattern state
+    private int invocationIndex = 0;
+    private float invocationLastInputTime = 0f;
+
+    // Attack patterns state (one per weapon attack)
+    class AttackPatternState { public int index; public float lastInputTime; }
+    AttackPatternState[] attackPatternStates = new AttackPatternState[0];
 
     void Awake()
     {
-        if (spellManager == null)
+        if (characterAnimator == null)
         {
-            spellManager = FindFirstObjectByType<SpellManager>();
-            if (spellManager == null)
-                Debug.LogError("UserManager: no SpellManager found. Please assign one in the inspector or ensure it exists in the scene.");
+            characterAnimator = GetComponent<CharacterAnimator>();
+            if (characterAnimator == null)
+                Debug.LogWarning("UserManager: no CharacterAnimator found. Animations will not play.");
         }
 
-        // initialize sequence states
-        EnsureSequenceStates();
+        if (weaponManager == null)
+        {
+            weaponManager = FindFirstObjectByType<WeaponManager>();
+            if (weaponManager == null)
+                Debug.LogWarning("UserManager: no WeaponManager found. Weapon system disabled.");
+        }
+
+        // Initialize attack pattern states
+        EnsureAttackPatternStates();
     }
 
-    void EnsureSequenceStates()
+    void EnsureAttackPatternStates()
     {
-        if (spellManager == null || spellManager.spells == null)
+        if (currentWeapon == null || currentWeapon.attacks == null)
         {
-            sequenceStates = new SequenceState[0];
+            attackPatternStates = new AttackPatternState[0];
             return;
         }
 
-        if (sequenceStates == null || sequenceStates.Length != spellManager.spells.Length)
+        if (attackPatternStates == null || attackPatternStates.Length != currentWeapon.attacks.Length)
         {
-            sequenceStates = new SequenceState[spellManager.spells.Length];
-            for (int i = 0; i < sequenceStates.Length; ++i)
-                sequenceStates[i] = new SequenceState() { index = 0, lastInputTime = 0f };
+            attackPatternStates = new AttackPatternState[currentWeapon.attacks.Length];
+            for (int i = 0; i < attackPatternStates.Length; ++i)
+                attackPatternStates[i] = new AttackPatternState() { index = 0, lastInputTime = 0f };
             UpdateSequenceDisplay();
         }
     }
 
     void OnEnable()
     {
-        EnsureSequenceStates();
+        EnsureAttackPatternStates();
         if (inputActions != null)
         {
             combatMap = inputActions.FindActionMap("combat", true);
@@ -75,6 +95,15 @@ public class UserManager : MonoBehaviour
             }
 
             combatMap.Enable();
+            
+            // Play stand still at combat start (only once)
+            if (!combatStarted && !weaponInvoked && characterAnimator != null)
+            {
+                characterAnimator.PlayStandStillNoWeapon();
+                combatStarted = true;
+                Debug.Log("Combat started: playing stand still without weapon");
+            }
+            
             UpdateSequenceDisplay();
         } 
         else 
@@ -98,16 +127,27 @@ public class UserManager : MonoBehaviour
         {
             Debug.LogError("UserManager: No InputActionAsset assigned. Please assign one in the inspector.");
         }
+
+        // Reset combat state when disabling (for potential restart)
+        combatStarted = false;
     }
 
     void Update()
     {
-        // update timeouts for configured sequence mappings
-        if (sequenceStates != null && sequenceStates.Length > 0)
+        // Update timeout for invocation pattern
+        if (!weaponInvoked && invocationIndex > 0 && Time.time - invocationLastInputTime > inputTimeout)
         {
-            for (int i = 0; i < sequenceStates.Length; ++i)
+            if (characterAnimator != null)
+                characterAnimator.StopInvocationLoop();
+            invocationIndex = 0;
+        }
+
+        // Update timeouts for attack patterns
+        if (weaponInvoked && attackPatternStates != null && attackPatternStates.Length > 0)
+        {
+            for (int i = 0; i < attackPatternStates.Length; ++i)
             {
-                var st = sequenceStates[i];
+                var st = attackPatternStates[i];
                 if (st.index > 0 && Time.time - st.lastInputTime > inputTimeout)
                     st.index = 0;
             }
@@ -134,37 +174,151 @@ public class UserManager : MonoBehaviour
     {
         Debug.Log("HandlePressed: " + pressed);
 
-        if (spellManager == null || spellManager.spells == null || spellManager.spells.Length == 0)
+        if (!weaponInvoked)
+        {
+            // PHASE 1: INVOCATION PATTERN
+            HandleInvocationPattern(pressed);
+        }
+        else
+        {
+            // PHASE 2: ATTACK PATTERNS
+            HandleAttackPatterns(pressed);
+        }
+
+        UpdateSequenceDisplay();
+    }
+
+    void HandleInvocationPattern(KeyCode pressed)
+    {
+        if (weaponManager == null)
             return;
 
-        EnsureSequenceStates();
-        for (int i = 0; i < spellManager.spells.Length; ++i)
+        Weapon[] weapons = weaponManager.GetAvailableWeapons();
+        if (weapons == null || weapons.Length == 0)
         {
-            var spell = spellManager.spells[i];
-            if (spell == null || spell.sequence == null || spell.sequence.Length == 0)
+            Debug.LogWarning("HandleInvocationPattern: No weapons available");
+            return;
+        }
+
+        // Try each weapon's invocation pattern
+        for (int w = 0; w < weapons.Length; ++w)
+        {
+            Weapon weapon = weapons[w];
+            if (weapon == null || weapon.invocationPattern == null || weapon.invocationPattern.Length == 0)
                 continue;
 
-            var st = sequenceStates[i];
+            // Check if this is the weapon being invoked currently
+            if (pressed == weapon.invocationPattern[invocationIndex])
+            {
+                invocationIndex++;
+                invocationLastInputTime = Time.time;
 
-            // timeout check
+                // Animation feedback
+                if (invocationIndex == 1 && characterAnimator != null)
+                {
+                    characterAnimator.PlayStartInvocation();
+                }
+                else if (invocationIndex > 1 && characterAnimator != null)
+                {
+                    characterAnimator.PlayInvocationLoop();
+                }
+
+                // Check if pattern complete
+                if (invocationIndex >= weapon.invocationPattern.Length)
+                {
+                    Debug.LogFormat("Invocation pattern for '{0}' complete!", weapon.weaponName);
+                    
+                    if (characterAnimator != null)
+                    {
+                        characterAnimator.StopInvocationLoop();
+                        characterAnimator.PlayInvocationEnd();
+                    }
+
+                    EquipWeapon(weapon);
+                    weaponInvoked = true;
+                    invocationIndex = 0;
+
+                }
+                return; // Don't try other weapons
+            }
+            else if (pressed == weapon.invocationPattern[0])
+            {
+                // First key of another weapon matches, restart
+                if (invocationIndex > 0 && characterAnimator != null)
+                    characterAnimator.StopInvocationLoop();
+                invocationIndex = 1;
+                invocationLastInputTime = Time.time;
+                return;
+            }
+        }
+
+        // No weapon pattern matched
+        if (invocationIndex > 0 && characterAnimator != null)
+            characterAnimator.StopInvocationLoop();
+        invocationIndex = 0;
+    }
+
+    void HandleAttackPatterns(KeyCode pressed)
+    {
+        if (currentWeapon == null || currentWeapon.attacks == null || currentWeapon.attacks.Length == 0)
+            return;
+
+        EnsureAttackPatternStates();
+
+        for (int i = 0; i < currentWeapon.attacks.Length; ++i)
+        {
+            Weapon.Attack attack = currentWeapon.attacks[i];
+            if (attack == null || attack.pattern == null || attack.pattern.Length == 0)
+                continue;
+
+            var st = attackPatternStates[i];
+
+            // timeout check (handled in Update, but double-check)
             if (st.index > 0 && Time.time - st.lastInputTime > inputTimeout)
                 st.index = 0;
 
-            if (pressed == spell.sequence[st.index])
+            if (pressed == attack.pattern[st.index])
             {
                 st.index++;
                 st.lastInputTime = Time.time;
 
-                if (st.index >= spell.sequence.Length)
+                if (st.index >= attack.pattern.Length)
                 {
-                    Debug.LogFormat("Sequence for spell '{0}' complete", spell.spellName);
-                    spellManager.TryExecuteSpell(spell.spellName, this.gameObject);
+                    // Pattern complete!
+                    Debug.LogFormat("Attack pattern '{0}' complete!", attack.attackName);
+
+                    // Check cooldown
+                    float timeSinceLastAttack = Time.time - attack.lastExecutedTime;
+                    if (timeSinceLastAttack < attack.cooldownSeconds)
+                    {
+                        Debug.LogWarning("Attack '" + attack.attackName + "' on cooldown for " + 
+                            (attack.cooldownSeconds - timeSinceLastAttack) + "s more");
+                        st.index = 0;
+                        return;
+                    }
+
+                    // Execute attack
+                    attack.lastExecutedTime = Time.time;
+
+                    if (characterAnimator != null)
+                        characterAnimator.PlayAttack(attack.attackName);
+
+                    // Apply damage to self (enemy will use this when they become a character)
+                    UpdateHealth(attack.damageAmount);
+
+                    // Spawn effect
+                    if (attack.effectPrefab != null)
+                    {
+                        TriggerAnimation.Spawn(attack.effectPrefab, transform.position, 1.5f, null, attack.damageAmount);
+                    }
+
                     st.index = 0;
+                    return;
                 }
             }
             else
             {
-                if (pressed == spell.sequence[0])
+                if (pressed == attack.pattern[0])
                     st.index = 1;
                 else
                     st.index = 0;
@@ -172,8 +326,6 @@ public class UserManager : MonoBehaviour
                 st.lastInputTime = Time.time;
             }
         }
-
-        UpdateSequenceDisplay();
     }
 
     void OnActionPerformed(InputAction.CallbackContext ctx)
@@ -209,57 +361,132 @@ public class UserManager : MonoBehaviour
 
     void UpdateSequenceDisplay()
     {
-        if (sequenceText == null || spellManager == null)
+        if (sequenceText == null || weaponManager == null)
             return;
-
-        if (spellManager.spells == null || spellManager.spells.Length == 0)
-        {
-            sequenceText.text = "(no spells configured in SpellManager)";
-            return;
-        }
 
         var sb = new System.Text.StringBuilder();
-        for (int i = 0; i < spellManager.spells.Length; ++i)
+
+        if (!weaponInvoked)
         {
-            var spell = spellManager.spells[i];
-            if (spell == null || spell.sequence == null || spell.sequence.Length == 0)
-                continue;
+            // PHASE 1: Show invocation patterns
+            sb.AppendLine("<color=#FF6600><b>WEAPON NOT INVOKED</b></color>");
+            sb.AppendLine("Complete an invocation sequence to proceed:");
+            sb.AppendLine();
 
-            // display spell name
-            if (!string.IsNullOrEmpty(spell.spellName))
+            Weapon[] weapons = weaponManager.GetAvailableWeapons();
+            if (weapons == null || weapons.Length == 0)
             {
-                sb.Append(spell.spellName);
+                sequenceText.text = "(no weapons available)";
+                return;
+            }
+
+            for (int w = 0; w < weapons.Length; ++w)
+            {
+                Weapon weapon = weapons[w];
+                if (weapon == null || weapon.invocationPattern == null || weapon.invocationPattern.Length == 0)
+                    continue;
+
+                sb.Append(weapon.weaponName);
+                sb.Append(" <i>(Invocation)</i>: ");
+
+                for (int j = 0; j < weapon.invocationPattern.Length; ++j)
+                {
+                    bool isNext = (invocationIndex == j);
+                    if (isNext)
+                        sb.Append("<color=#FFFF00><b>");
+
+                    sb.Append(weapon.invocationPattern[j].ToString());
+
+                    if (isNext)
+                        sb.Append("</b></color>");
+
+                    if (j < weapon.invocationPattern.Length - 1)
+                        sb.Append(" → ");
+                }
+
+                if (w < weapons.Length - 1)
+                    sb.AppendLine();
+            }
+        }
+        else
+        {
+            // PHASE 2: Show attack patterns
+            sb.AppendLine("<color=#00FF00><b>WEAPON INVOKED</b></color>");
+            if (currentWeapon != null)
+                sb.AppendLine("Weapon: <b>" + currentWeapon.weaponName + "</b>");
+            sb.AppendLine("Cast attacks/spells using sequences:");
+            sb.AppendLine();
+
+            if (currentWeapon == null || currentWeapon.attacks == null || currentWeapon.attacks.Length == 0)
+            {
+                sequenceText.text = "(no attacks configured for this weapon)";
+                return;
+            }
+
+            for (int i = 0; i < currentWeapon.attacks.Length; ++i)
+            {
+                Weapon.Attack attack = currentWeapon.attacks[i];
+                if (attack == null || attack.pattern == null || attack.pattern.Length == 0)
+                    continue;
+
+                sb.Append(attack.attackName);
                 sb.Append(": ");
+
+                for (int j = 0; j < attack.pattern.Length; ++j)
+                {
+                    bool isNext = (attackPatternStates != null && i < attackPatternStates.Length && 
+                                   attackPatternStates[i] != null && attackPatternStates[i].index == j);
+                    if (isNext)
+                        sb.Append("<color=#FFFF00><b>");
+
+                    sb.Append(attack.pattern[j].ToString());
+
+                    if (isNext)
+                        sb.Append("</b></color>");
+
+                    if (j < attack.pattern.Length - 1)
+                        sb.Append(" → ");
+                }
+
+                // cooldown indicator
+                if (attack.cooldownSeconds > 0f)
+                {
+                    float timeLeft = attack.cooldownSeconds - (Time.time - attack.lastExecutedTime);
+                    if (timeLeft > 0f)
+                        sb.Append("  <color=#FF0000>[" + timeLeft.ToString("F1") + "s]</color>");
+                }
+
+                if (i < currentWeapon.attacks.Length - 1)
+                    sb.AppendLine();
             }
-
-            // show sequence
-            for (int j = 0; j < spell.sequence.Length; ++j)
-            {
-                bool isNext = (sequenceStates != null && i < sequenceStates.Length && sequenceStates[i] != null && sequenceStates[i].index == j);
-                if (isNext)
-                    sb.Append("<color=#FFFF00><b>");
-
-                sb.Append(spell.sequence[j].ToString());
-
-                if (isNext)
-                    sb.Append("</b></color>");
-
-                if (j < spell.sequence.Length - 1)
-                    sb.Append(" → ");
-            }
-
-            // cooldown indicator
-            if (spell.cooldownSeconds > 0f)
-            {
-                float timeLeft = spell.cooldownSeconds - (Time.time - spell.lastExecutedTime);
-                if (timeLeft > 0f)
-                    sb.Append("  <color=#FF0000>[" + timeLeft.ToString("F1") + "s]</color>");
-            }
-
-            if (i < spellManager.spells.Length - 1)
-                sb.AppendLine();
         }
 
         sequenceText.text = sb.ToString();
+    }
+
+    /// <summary>
+    /// Equip a weapon and load its attacks/animations
+    /// </summary>
+    private void EquipWeapon(Weapon weapon)
+    {
+        if (weapon == null)
+        {
+            Debug.LogWarning("UserManager: Cannot equip null weapon");
+            return;
+        }
+
+        currentWeapon = weapon;
+
+        // Setup character animations for this weapon
+        if (characterAnimator != null)
+        {
+            characterAnimator.SetupWeaponAnimations(weapon);
+        }
+
+        // Initialize attack pattern states for this weapon
+        EnsureAttackPatternStates();
+
+        Debug.LogFormat("UserManager: Weapon '{0}' equipped with {1} attacks", 
+            weapon.weaponName, weapon.attacks != null ? weapon.attacks.Length : 0);
     }
 }

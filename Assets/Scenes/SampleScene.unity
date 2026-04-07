@@ -763,6 +763,61 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!1 &570865335
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 570865337}
+  - component: {fileID: 570865336}
+  m_Layer: 0
+  m_Name: GameManager
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &570865336
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 570865335}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 10220adb5d7965a4197d1569c4fdc183, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::WeaponManager
+  availableWeapons:
+  - weaponName: Double dagger
+    invocationPattern: 1101000011010000130100001401000012010000
+    attacks: []
+    invocationEndClip: {fileID: 7400000, guid: b5746279423cdaf47b1e1f61b7b2aabd, type: 2}
+    standStillClip: {fileID: 7400000, guid: c2b2788c3705b0e4cbb871b1405bbf31, type: 2}
+  - weaponName: Magic wand
+    invocationPattern: 1401000013010000140100001301000011010000
+    attacks: []
+    invocationEndClip: {fileID: 7400000, guid: d52b6ff7ac5a96d47a243d6e93b7372e, type: 2}
+    standStillClip: {fileID: 7400000, guid: cbe78230219bbf043a1d323fe2c57d98, type: 2}
+--- !u!4 &570865337
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 570865335}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: 0, y: 0, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &604524142
 GameObject:
   m_ObjectHideFlags: 0
@@ -1235,64 +1290,6 @@ Transform:
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
---- !u!1 &1287438690
-GameObject:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  serializedVersion: 6
-  m_Component:
-  - component: {fileID: 1287438692}
-  - component: {fileID: 1287438691}
-  m_Layer: 0
-  m_Name: SpellManager
-  m_TagString: Untagged
-  m_Icon: {fileID: 0}
-  m_NavMeshLayer: 0
-  m_StaticEditorFlags: 0
-  m_IsActive: 1
---- !u!114 &1287438691
-MonoBehaviour:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1287438690}
-  m_Enabled: 1
-  m_EditorHideFlags: 0
-  m_Script: {fileID: 11500000, guid: a4eb589e41935f7439efb80824274e49, type: 3}
-  m_Name: 
-  m_EditorClassIdentifier: Assembly-CSharp::SpellManager
-  spells:
-  - spellName: Fireball
-    sequence: 1201000012010000
-    spellPrefab: {fileID: 1735464759}
-    spellDuration: 0.9
-    damageAmount: 4
-    cooldownSeconds: 0
-  - spellName: Ice_spike
-    sequence: 1101000011010000
-    spellPrefab: {fileID: 971337765}
-    spellDuration: 0.9
-    damageAmount: 3
-    cooldownSeconds: 0
-  spawnPosition: {x: 4, y: -2.8, z: 0}
---- !u!4 &1287438692
-Transform:
-  m_ObjectHideFlags: 0
-  m_CorrespondingSourceObject: {fileID: 0}
-  m_PrefabInstance: {fileID: 0}
-  m_PrefabAsset: {fileID: 0}
-  m_GameObject: {fileID: 1287438690}
-  serializedVersion: 2
-  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.04809, y: -0.00539, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
-  m_ConstrainProportionsScale: 0
-  m_Children: []
-  m_Father: {fileID: 0}
-  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &1299147538
 GameObject:
   m_ObjectHideFlags: 0
@@ -1628,7 +1625,7 @@ SpriteRenderer:
   m_GlobalIlluminationMeshLod: 0
   m_SortingLayerID: 0
   m_SortingLayer: 0
-  m_SortingOrder: 0
+  m_SortingOrder: -100
   m_MaskInteraction: 0
   m_Sprite: {fileID: -7585009627398372457, guid: a5c3cb363a58dcc4bb2dc59703dd6bda, type: 3}
   m_Color: {r: 1, g: 1, b: 1, a: 1}
@@ -1665,8 +1662,10 @@ GameObject:
   m_Component:
   - component: {fileID: 2100649494}
   - component: {fileID: 2100649493}
+  - component: {fileID: 2100649495}
+  - component: {fileID: 2100649496}
   m_Layer: 0
-  m_Name: UserManager
+  m_Name: Character
   m_TagString: Untagged
   m_Icon: {fileID: 0}
   m_NavMeshLayer: 0
@@ -1685,9 +1684,10 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UserManager
   hudManager: {fileID: 441100887}
+  characterAnimator: {fileID: 2100649495}
+  weaponManager: {fileID: 570865336}
   inputTimeout: 1
   inputActions: {fileID: -944628639613478452, guid: 87aff596717ecb845837ccf917cf0ff7, type: 3}
-  spellManager: {fileID: 1287438691}
   sequenceText: {fileID: 868971408}
 --- !u!4 &2100649494
 Transform:
@@ -1698,12 +1698,46 @@ Transform:
   m_GameObject: {fileID: 2100649492}
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
-  m_LocalPosition: {x: -0.04809, y: -0.00539, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalPosition: {x: 0, y: -3.5, z: 0}
+  m_LocalScale: {x: 5, y: 5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
   m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
+--- !u!114 &2100649495
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2100649492}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: f7a8c732e8753f44fb58017d1b3e8545, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::CharacterAnimator
+--- !u!95 &2100649496
+Animator:
+  serializedVersion: 7
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2100649492}
+  m_Enabled: 1
+  m_Avatar: {fileID: 0}
+  m_Controller: {fileID: 9100000, guid: 77f83850cc7367046b4548f6619c76c8, type: 2}
+  m_CullingMode: 0
+  m_UpdateMode: 0
+  m_ApplyRootMotion: 0
+  m_LinearVelocityBlending: 0
+  m_StabilizeFeet: 0
+  m_AnimatePhysics: 0
+  m_WarningMessage: 
+  m_HasTransformHierarchy: 1
+  m_AllowConstantClipSamplingOptimization: 1
+  m_KeepAnimatorStateOnDisable: 0
+  m_WriteDefaultValuesOnDisable: 0
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -1716,5 +1750,5 @@ SceneRoots:
   - {fileID: 1735464762}
   - {fileID: 971337768}
   - {fileID: 2100649494}
-  - {fileID: 1287438692}
   - {fileID: 441100888}
+  - {fileID: 570865337}

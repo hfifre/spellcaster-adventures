@@ -3,14 +3,28 @@ using System.Collections.Generic;
 
 public class SpellManager : MonoBehaviour
 {
+    public enum SpellType { Invocation, Attack }
+
     [System.Serializable]
     public class SpellEntry
     {
         public string spellName;
+        public SpellType spellType = SpellType.Attack;
+        
+        [Tooltip("Sequence of keys to cast this spell")]
         public KeyCode[] sequence = new KeyCode[0];
+        
         public GameObject spellPrefab;
         public float spellDuration = 2f;
         public float damageAmount = 10f;
+
+        [Header("Animation")]
+        [Tooltip("Animation name for this spell/attack (optional)")]
+        public string animationName = "";
+
+        [Header("Invocation settings (for spells of type Invocation)")]
+        [Tooltip("Duration to display the invocation loop animation")]
+        public float invocationLoopDuration = 2f;
 
         [Header("Optional effects")]
         public float cooldownSeconds = 0f;
@@ -109,5 +123,23 @@ public class SpellManager : MonoBehaviour
             if (spells[i] != null && spells[i].spellName == spellName)
                 return spells[i];
         return null;
+    }
+
+    // Check if a spell is an invocation type
+    public bool IsInvocationSpell(string spellName)
+    {
+        var entry = FindSpellByName(spellName);
+        return entry != null && entry.spellType == SpellType.Invocation;
+    }
+
+    // Check if there is any invocation spell configured
+    public bool HasInvocationSpell()
+    {
+        if (spells == null)
+            return false;
+        for (int i = 0; i < spells.Length; ++i)
+            if (spells[i] != null && spells[i].spellType == SpellType.Invocation)
+                return true;
+        return false;
     }
 }
