@@ -23,6 +23,22 @@ public class CharacterAnimator : MonoBehaviour
             baseController = animator.runtimeAnimatorController;
     }
 
+    // Check if currently in StandStillNoWeapon state
+    public bool IsInStandStillNoWeapon()
+    {
+        if (animator == null) return false;
+        AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
+        return stateInfo.shortNameHash == hashStandStillNoWeapon;
+    }
+
+    // Check if currently in Attack state
+    public bool IsInAttackState()
+    {
+        if (animator == null) return false;
+        AnimatorStateInfo stateInfo = animator.GetCurrentAnimatorStateInfo(0);
+        return stateInfo.shortNameHash == hashAttack;
+    }
+
     // Play stand still without weapon animation (idle, no weapon)
     public void PlayStandStillNoWeapon()
     {
@@ -35,17 +51,11 @@ public class CharacterAnimator : MonoBehaviour
     public void PlayStartInvocation()
     {
         if (animator == null) return;
-        animator.SetTrigger(hashStandStillNoWeapon);
-        animator.SetTrigger(hashInvocationStart);
+        if(IsInStandStillNoWeapon())
+            animator.CrossFadeInFixedTime(hashInvocationStart, 0f, 0); // 0 duration = instant transition
+        else
+            animator.SetTrigger(hashInvocationStart);
         Debug.Log("CharacterAnimator: Playing StandStillNoWeapon -> InvocationStart sequence");
-    }
-
-    // Play the invocation start animation (character crouches down)
-    public void PlayInvocationStart()
-    {
-        if (animator == null) return;
-        animator.SetTrigger(hashInvocationStart);
-        Debug.Log("CharacterAnimator: Playing InvocationStart");
     }
 
     // Play the invocation loop animation (character stays crouched, idle loop)
@@ -68,7 +78,7 @@ public class CharacterAnimator : MonoBehaviour
     public void PlayInvocationEnd()
     {
         if (animator == null) return;
-        animator.SetTrigger(hashInvocationEnd);
+        animator.CrossFadeInFixedTime(hashInvocationEnd, 0f, 0); // 0 duration = instant transition
         Debug.Log("CharacterAnimator: Playing InvocationEnd");
     }
 
@@ -76,7 +86,9 @@ public class CharacterAnimator : MonoBehaviour
     public void PlayStandStill()
     {
         if (animator == null) return;
-        animator.SetTrigger(hashStandStill);
+        
+        // Use SetBool to allow interruption by other animations
+        animator.SetBool(hashStandStill, true);
         Debug.Log("CharacterAnimator: Playing StandStill");
     }
 
@@ -85,8 +97,10 @@ public class CharacterAnimator : MonoBehaviour
     {
         if (animator == null) return;
 
+        // Force immediate transition to Attack state, ignoring current animation
+        animator.CrossFadeInFixedTime(hashAttack, 0f, 0); // 0 duration = instant transition
+
         // Note: attackName is reserved for future implementation if you add a string parameter to your Animator
-        animator.SetTrigger(hashAttack);
         Debug.Log("CharacterAnimator: Playing Attack (" + (string.IsNullOrEmpty(attackName) ? "default" : attackName) + ")");
     }
 

@@ -28,6 +28,24 @@ public class UserManager : MonoBehaviour
     [Tooltip("Assign your InputActionAsset (UserActions.inputactions) here. The script will use the 'combat' map and its Up/Down/Left/Right actions.")]
     public InputActionAsset inputActions;
 
+    // Helper function to convert KeyCode to arrow symbol
+    private string KeyCodeToArrowSymbol(KeyCode key)
+    {
+        switch (key)
+        {
+            case KeyCode.UpArrow:
+                return "↑";
+            case KeyCode.DownArrow:
+                return "↓";
+            case KeyCode.LeftArrow:
+                return "←";
+            case KeyCode.RightArrow:
+                return "→";
+            default:
+                return key.ToString();
+        }
+    }
+
     // InputAction references (populated when asset is assigned)
     InputActionMap combatMap;
     System.Collections.Generic.List<InputAction> combatActions = new System.Collections.Generic.List<InputAction>();
@@ -39,6 +57,7 @@ public class UserManager : MonoBehaviour
     // Invocation pattern state
     private int invocationIndex = 0;
     private float invocationLastInputTime = 0f;
+    private int currentInvocationWeaponIndex = -1; // Track which weapon pattern is being followed (-1 = none)
 
     // Attack patterns state (one per weapon attack)
     class AttackPatternState { public int index; public float lastInputTime; }
@@ -130,6 +149,8 @@ public class UserManager : MonoBehaviour
 
         // Reset combat state when disabling (for potential restart)
         combatStarted = false;
+        invocationIndex = 0;
+        currentInvocationWeaponIndex = -1;
     }
 
     void Update()
@@ -140,6 +161,7 @@ public class UserManager : MonoBehaviour
             if (characterAnimator != null)
                 characterAnimator.StopInvocationLoop();
             invocationIndex = 0;
+            currentInvocationWeaponIndex = -1;
         }
 
         // Update timeouts for attack patterns
@@ -200,54 +222,98 @@ public class UserManager : MonoBehaviour
             return;
         }
 
-        // Try each weapon's invocation pattern
+        // If we're already following a specific weapon pattern, stay with it
+        if (currentInvocationWeaponIndex >= 0 && currentInvocationWeaponIndex < weapons.Length)
+        {
+            Weapon weapon = weapons[currentInvocationWeaponIndex];
+            if (weapon != null && weapon.invocationPattern != null && weapon.invocationPattern.Length > invocationIndex)
+            {
+                if (pressed == weapon.invocationPattern[invocationIndex])
+                {
+                    // Correct next key for current weapon
+                    invocationIndex++;
+                    invocationLastInputTime = Time.time;
+
+                    // Animation feedback
+                    if (invocationIndex == 1 && characterAnimator != null)
+                    {
+                        characterAnimator.PlayStartInvocation();
+                    }
+                    else if (invocationIndex > 1 && characterAnimator != null)
+                    {
+                        characterAnimator.PlayInvocationLoop();
+                    }
+
+                    // Check if pattern complete
+                    if (invocationIndex >= weapon.invocationPattern.Length)
+                    {
+                        Debug.LogFormat("Invocation pattern for '{0}' complete!", weapon.weaponName);
+                        
+                        if (characterAnimator != null)
+                        {
+                            characterAnimator.PlayInvocationEnd();
+                        }
+
+                        EquipWeapon(weapon);
+                        weaponInvoked = true;
+                        invocationIndex = 0;
+                        currentInvocationWeaponIndex = -1;
+                    }
+                    return;
+                }
+                else
+                {
+                    // Wrong key for current weapon, check if it starts a new pattern
+                    for (int w = 0; w < weapons.Length; ++w)
+                    {
+                        Weapon otherWeapon = weapons[w];
+                        if (otherWeapon == null || otherWeapon.invocationPattern == null || otherWeapon.invocationPattern.Length == 0)
+                            continue;
+                        
+                        if (pressed == otherWeapon.invocationPattern[0])
+                        {
+                            // Switch to new weapon pattern
+                            if (characterAnimator != null)
+                                characterAnimator.StopInvocationLoop();
+                            invocationIndex = 1;
+                            invocationLastInputTime = Time.time;
+                            currentInvocationWeaponIndex = w;
+                            
+                            if (characterAnimator != null)
+                                characterAnimator.PlayStartInvocation();
+                            return;
+                        }
+                    }
+                    
+                    // No weapon starts with this key, reset
+                    if (characterAnimator != null)
+                        characterAnimator.StopInvocationLoop();
+                    invocationIndex = 0;
+                    currentInvocationWeaponIndex = -1;
+                    return;
+                }
+            }
+        }
+
+        // Try each weapon's invocation pattern (no weapon currently being followed)
         for (int w = 0; w < weapons.Length; ++w)
         {
             Weapon weapon = weapons[w];
             if (weapon == null || weapon.invocationPattern == null || weapon.invocationPattern.Length == 0)
                 continue;
 
-            // Check if this is the weapon being invoked currently
-            if (pressed == weapon.invocationPattern[invocationIndex])
+            if (pressed == weapon.invocationPattern[0])
             {
-                invocationIndex++;
+                invocationIndex = 1;
                 invocationLastInputTime = Time.time;
+                currentInvocationWeaponIndex = w;
 
                 // Animation feedback
-                if (invocationIndex == 1 && characterAnimator != null)
+                if (characterAnimator != null)
                 {
                     characterAnimator.PlayStartInvocation();
                 }
-                else if (invocationIndex > 1 && characterAnimator != null)
-                {
-                    characterAnimator.PlayInvocationLoop();
-                }
 
-                // Check if pattern complete
-                if (invocationIndex >= weapon.invocationPattern.Length)
-                {
-                    Debug.LogFormat("Invocation pattern for '{0}' complete!", weapon.weaponName);
-                    
-                    if (characterAnimator != null)
-                    {
-                        characterAnimator.StopInvocationLoop();
-                        characterAnimator.PlayInvocationEnd();
-                    }
-
-                    EquipWeapon(weapon);
-                    weaponInvoked = true;
-                    invocationIndex = 0;
-
-                }
-                return; // Don't try other weapons
-            }
-            else if (pressed == weapon.invocationPattern[0])
-            {
-                // First key of another weapon matches, restart
-                if (invocationIndex > 0 && characterAnimator != null)
-                    characterAnimator.StopInvocationLoop();
-                invocationIndex = 1;
-                invocationLastInputTime = Time.time;
                 return;
             }
         }
@@ -256,6 +322,7 @@ public class UserManager : MonoBehaviour
         if (invocationIndex > 0 && characterAnimator != null)
             characterAnimator.StopInvocationLoop();
         invocationIndex = 0;
+        currentInvocationWeaponIndex = -1;
     }
 
     void HandleAttackPatterns(KeyCode pressed)
@@ -391,17 +458,15 @@ public class UserManager : MonoBehaviour
 
                 for (int j = 0; j < weapon.invocationPattern.Length; ++j)
                 {
-                    bool isNext = (invocationIndex == j);
+                    // Only highlight if this is the weapon currently being followed AND this is the next key
+                    bool isNext = (currentInvocationWeaponIndex == w && invocationIndex == j);
                     if (isNext)
                         sb.Append("<color=#FFFF00><b>");
 
-                    sb.Append(weapon.invocationPattern[j].ToString());
+                    sb.Append(KeyCodeToArrowSymbol(weapon.invocationPattern[j]));
 
                     if (isNext)
                         sb.Append("</b></color>");
-
-                    if (j < weapon.invocationPattern.Length - 1)
-                        sb.Append(" → ");
                 }
 
                 if (w < weapons.Length - 1)
@@ -439,13 +504,10 @@ public class UserManager : MonoBehaviour
                     if (isNext)
                         sb.Append("<color=#FFFF00><b>");
 
-                    sb.Append(attack.pattern[j].ToString());
+                    sb.Append(KeyCodeToArrowSymbol(attack.pattern[j]));
 
                     if (isNext)
                         sb.Append("</b></color>");
-
-                    if (j < attack.pattern.Length - 1)
-                        sb.Append(" → ");
                 }
 
                 // cooldown indicator
