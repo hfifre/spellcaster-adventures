@@ -194,6 +194,53 @@ RectTransform:
   m_AnchoredPosition: {x: 0, y: 0}
   m_SizeDelta: {x: 10, y: 0}
   m_Pivot: {x: 0.5, y: 0.5}
+--- !u!1 &63374913
+GameObject:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  serializedVersion: 6
+  m_Component:
+  - component: {fileID: 63374915}
+  - component: {fileID: 63374914}
+  m_Layer: 0
+  m_Name: Enemy
+  m_TagString: Untagged
+  m_Icon: {fileID: 0}
+  m_NavMeshLayer: 0
+  m_StaticEditorFlags: 0
+  m_IsActive: 1
+--- !u!114 &63374914
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 63374913}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: cb1a97a8e8042004a9a91ed7503da0d6, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::Enemy
+  maxHealth: 100
+  attackDamage: 3
+  attackCooldown: 1
+--- !u!4 &63374915
+Transform:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 63374913}
+  serializedVersion: 2
+  m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
+  m_LocalPosition: {x: -0.60464, y: 1.58039, z: 0}
+  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_ConstrainProportionsScale: 0
+  m_Children: []
+  m_Father: {fileID: 0}
+  m_LocalEulerAnglesHint: {x: 0, y: 0, z: 0}
 --- !u!1 &95189570
 GameObject:
   m_ObjectHideFlags: 0
@@ -793,34 +840,8 @@ MonoBehaviour:
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::WeaponManager
   availableWeapons:
-  - weaponName: Double dagger
-    invocationPattern: 1101000013010000130100001401000011010000
-    attacks:
-    - attackName: flash cut
-      pattern: 110100001101000011010000
-      animationClip: {fileID: 0}
-      effectPrefab: {fileID: 0}
-      damageAmount: 3
-      cooldownSeconds: 5
-    invocationEndClip: {fileID: 7400000, guid: b5746279423cdaf47b1e1f61b7b2aabd, type: 2}
-    standStillClip: {fileID: 7400000, guid: c2b2788c3705b0e4cbb871b1405bbf31, type: 2}
-  - weaponName: Magic wand
-    invocationPattern: 1401000013010000140100001301000012010000
-    attacks:
-    - attackName: Fireball
-      pattern: 120100001101000014010000
-      animationClip: {fileID: 7400000, guid: b2af8790b020d5941a73595840887852, type: 2}
-      effectPrefab: {fileID: 1735464759}
-      damageAmount: 5
-      cooldownSeconds: 10
-    - attackName: Icespike
-      pattern: 140100001201000012010000
-      animationClip: {fileID: 7400000, guid: 1635d45532962d4469adb0fa9ba8c3bc, type: 2}
-      effectPrefab: {fileID: 971337765}
-      damageAmount: 2
-      cooldownSeconds: 4
-    invocationEndClip: {fileID: 7400000, guid: d52b6ff7ac5a96d47a243d6e93b7372e, type: 2}
-    standStillClip: {fileID: 7400000, guid: cbe78230219bbf043a1d323fe2c57d98, type: 2}
+  - {fileID: 0}
+  - {fileID: 0}
 --- !u!4 &570865337
 Transform:
   m_ObjectHideFlags: 0
@@ -1683,6 +1704,7 @@ GameObject:
   - component: {fileID: 2100649495}
   - component: {fileID: 2100649496}
   - component: {fileID: 2100649497}
+  - component: {fileID: 2100649498}
   m_Layer: 0
   m_Name: Character
   m_TagString: Untagged
@@ -1702,7 +1724,6 @@ MonoBehaviour:
   m_Script: {fileID: 11500000, guid: 16b8d35f248192849bc01366723bfda2, type: 3}
   m_Name: 
   m_EditorClassIdentifier: Assembly-CSharp::UserManager
-  hudManager: {fileID: 441100887}
   characterAnimator: {fileID: 2100649495}
   weaponManager: {fileID: 570865336}
   inputTimeout: 1
@@ -1718,7 +1739,7 @@ Transform:
   serializedVersion: 2
   m_LocalRotation: {x: 0, y: 0, z: 0, w: 1}
   m_LocalPosition: {x: 0, y: -3, z: 0}
-  m_LocalScale: {x: 1, y: 1, z: 1}
+  m_LocalScale: {x: 5, y: 5, z: 1}
   m_ConstrainProportionsScale: 0
   m_Children: []
   m_Father: {fileID: 0}
@@ -1816,6 +1837,20 @@ SpriteRenderer:
   m_SpriteTileMode: 0
   m_WasSpriteAssigned: 0
   m_SpriteSortPoint: 0
+--- !u!114 &2100649498
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 2100649492}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: c56edb0ed562c5a479ba4b312336b510, type: 3}
+  m_Name: 
+  m_EditorClassIdentifier: Assembly-CSharp::PlayerEntity
+  maxHealth: 100
+  hudManager: {fileID: 441100887}
 --- !u!1660057539 &9223372036854775807
 SceneRoots:
   m_ObjectHideFlags: 0
@@ -1830,3 +1865,4 @@ SceneRoots:
   - {fileID: 2100649494}
   - {fileID: 441100888}
   - {fileID: 570865337}
+  - {fileID: 63374915}

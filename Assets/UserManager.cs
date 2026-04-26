@@ -5,22 +5,17 @@ using TMPro;
 
 public class UserManager : MonoBehaviour
 {
-    [Tooltip("Reference to the HUDManager to update health bar and other UI elements.")]
-    [SerializeField] private HUDManager hudManager;
-    
     [Tooltip("Reference to the CharacterAnimator for animation control.")]
     [SerializeField] private CharacterAnimator characterAnimator;
     
     [Tooltip("Reference to the WeaponManager for weapon management.")]
     [SerializeField] private WeaponManager weaponManager;
 
-    private float currentHealth = 100f;
-    private float maxHealth = 100f;
-
     // Weapon state
     private bool weaponInvoked = false;
     private bool combatStarted = false;
     private Weapon currentWeapon = null;
+    private PlayerEntity playerEntity;
 
     [Tooltip("Seconds allowed between key presses before progress resets")]
     public float inputTimeout = 1f;
@@ -60,7 +55,7 @@ public class UserManager : MonoBehaviour
     private int currentInvocationWeaponIndex = -1; // Track which weapon pattern is being followed (-1 = none)
 
     // Attack patterns state (one per weapon attack)
-    class AttackPatternState { public int index; public float lastInputTime; }
+    class AttackPatternState { public int index; public float lastInputTime; public float lastExecutedTime = -1000f; }
     AttackPatternState[] attackPatternStates = new AttackPatternState[0];
 
     void Awake()
@@ -71,6 +66,10 @@ public class UserManager : MonoBehaviour
             if (characterAnimator == null)
                 Debug.LogWarning("UserManager: no CharacterAnimator found. Animations will not play.");
         }
+
+        playerEntity = GetComponent<PlayerEntity>();
+        if (playerEntity == null)
+            Debug.LogWarning("UserManager: no PlayerEntity found on this GameObject.");
 
         if (weaponManager == null)
         {
@@ -85,15 +84,15 @@ public class UserManager : MonoBehaviour
 
     void EnsureAttackPatternStates()
     {
-        if (currentWeapon == null || currentWeapon.attacks == null)
+        if (currentWeapon == null || currentWeapon.actions == null)
         {
             attackPatternStates = new AttackPatternState[0];
             return;
         }
 
-        if (attackPatternStates == null || attackPatternStates.Length != currentWeapon.attacks.Length)
+        if (attackPatternStates == null || attackPatternStates.Length != currentWeapon.actions.Length)
         {
-            attackPatternStates = new AttackPatternState[currentWeapon.attacks.Length];
+            attackPatternStates = new AttackPatternState[currentWeapon.actions.Length];
             for (int i = 0; i < attackPatternStates.Length; ++i)
                 attackPatternStates[i] = new AttackPatternState() { index = 0, lastInputTime = 0f };
             UpdateSequenceDisplay();
@@ -179,16 +178,6 @@ public class UserManager : MonoBehaviour
         if (inputActions == null)
         {
             Debug.LogError("UserManager: No InputActionAsset assigned. Please assign one in the inspector.");
-        }
-    }
-
-    public void UpdateHealth(float damage)
-    {
-        currentHealth -= damage;
-        if (currentHealth < 0f) currentHealth = 0f;
-        if (hudManager != null)
-        {
-            hudManager.UpdateHealthBar(currentHealth, maxHealth);
         }
     }
 
@@ -327,57 +316,50 @@ public class UserManager : MonoBehaviour
 
     void HandleAttackPatterns(KeyCode pressed)
     {
-        if (currentWeapon == null || currentWeapon.attacks == null || currentWeapon.attacks.Length == 0)
+        if (currentWeapon == null || currentWeapon.actions == null || currentWeapon.actions.Length == 0)
             return;
 
         EnsureAttackPatternStates();
 
-        for (int i = 0; i < currentWeapon.attacks.Length; ++i)
+        for (int i = 0; i < currentWeapon.actions.Length; ++i)
         {
-            Weapon.Attack attack = currentWeapon.attacks[i];
-            if (attack == null || attack.pattern == null || attack.pattern.Length == 0)
+            WeaponAction action = currentWeapon.actions[i];
+            if (action == null || action.pattern == null || action.pattern.Length == 0)
                 continue;
 
             var st = attackPatternStates[i];
 
-            // timeout check (handled in Update, but double-check)
             if (st.index > 0 && Time.time - st.lastInputTime > inputTimeout)
                 st.index = 0;
 
-            if (pressed == attack.pattern[st.index])
+            if (pressed == action.pattern[st.index])
             {
                 st.index++;
                 st.lastInputTime = Time.time;
 
-                if (st.index >= attack.pattern.Length)
+                if (st.index >= action.pattern.Length)
                 {
-                    // Pattern complete!
-                    Debug.LogFormat("Attack pattern '{0}' complete!", attack.attackName);
+                    Debug.LogFormat("Action pattern '{0}' complete!", action.actionName);
 
-                    // Check cooldown
-                    float timeSinceLastAttack = Time.time - attack.lastExecutedTime;
-                    if (timeSinceLastAttack < attack.cooldownSeconds)
+                    float timeSinceLastAction = Time.time - st.lastExecutedTime;
+                    if (timeSinceLastAction < action.cooldownSeconds)
                     {
-                        Debug.LogWarning("Attack '" + attack.attackName + "' on cooldown for " + 
-                            (attack.cooldownSeconds - timeSinceLastAttack) + "s more");
+                        Debug.LogWarning("Action '" + action.actionName + "' on cooldown for " +
+                            (action.cooldownSeconds - timeSinceLastAction) + "s more");
                         st.index = 0;
                         return;
                     }
 
-                    // Execute attack
-                    attack.lastExecutedTime = Time.time;
+                    st.lastExecutedTime = Time.time;
 
                     if (characterAnimator != null)
-                        characterAnimator.PlayAttack(attack.attackName);
+                        characterAnimator.PlayAttack(action.actionName);
 
-                    // Apply damage to self (enemy will use this when they become a character)
-                    UpdateHealth(attack.damageAmount);
+                    if (action.effectPrefab != null)
+                        TriggerAnimation.Spawn(action.effectPrefab, transform.position, 1.5f);
 
-                    // Spawn effect
-                    if (attack.effectPrefab != null)
-                    {
-                        TriggerAnimation.Spawn(attack.effectPrefab, transform.position, 1.5f, null, attack.damageAmount);
-                    }
+                    Enemy target = FindFirstObjectByType<Enemy>();
+                    action.Execute(playerEntity, target != null ? (Entity)target : null);
 
                     st.index = 0;
                     return;
@@ -385,11 +367,7 @@ public class UserManager : MonoBehaviour
             }
             else
             {
-                if (pressed == attack.pattern[0])
-                    st.index = 1;
-                else
-                    st.index = 0;
-
+                st.index = pressed == action.pattern[0] ? 1 : 0;
                 st.lastInputTime = Time.time;
             }
         }
@@ -482,43 +460,42 @@ public class UserManager : MonoBehaviour
             sb.AppendLine("Cast attacks/spells using sequences:");
             sb.AppendLine();
 
-            if (currentWeapon == null || currentWeapon.attacks == null || currentWeapon.attacks.Length == 0)
+            if (currentWeapon == null || currentWeapon.actions == null || currentWeapon.actions.Length == 0)
             {
-                sequenceText.text = "(no attacks configured for this weapon)";
+                sequenceText.text = "(no actions configured for this weapon)";
                 return;
             }
 
-            for (int i = 0; i < currentWeapon.attacks.Length; ++i)
+            for (int i = 0; i < currentWeapon.actions.Length; ++i)
             {
-                Weapon.Attack attack = currentWeapon.attacks[i];
-                if (attack == null || attack.pattern == null || attack.pattern.Length == 0)
+                WeaponAction action = currentWeapon.actions[i];
+                if (action == null || action.pattern == null || action.pattern.Length == 0)
                     continue;
 
-                sb.Append(attack.attackName);
+                sb.Append(action.actionName);
                 sb.Append(": ");
 
-                for (int j = 0; j < attack.pattern.Length; ++j)
+                for (int j = 0; j < action.pattern.Length; ++j)
                 {
-                    bool isNext = (attackPatternStates != null && i < attackPatternStates.Length && 
+                    bool isNext = (attackPatternStates != null && i < attackPatternStates.Length &&
                                    attackPatternStates[i] != null && attackPatternStates[i].index == j);
                     if (isNext)
                         sb.Append("<color=#FFFF00><b>");
 
-                    sb.Append(KeyCodeToArrowSymbol(attack.pattern[j]));
+                    sb.Append(KeyCodeToArrowSymbol(action.pattern[j]));
 
                     if (isNext)
                         sb.Append("</b></color>");
                 }
 
-                // cooldown indicator
-                if (attack.cooldownSeconds > 0f)
+                if (action.cooldownSeconds > 0f)
                 {
-                    float timeLeft = attack.cooldownSeconds - (Time.time - attack.lastExecutedTime);
+                    float timeLeft = action.cooldownSeconds - (Time.time - attackPatternStates[i].lastExecutedTime);
                     if (timeLeft > 0f)
                         sb.Append("  <color=#FF0000>[" + timeLeft.ToString("F1") + "s]</color>");
                 }
 
-                if (i < currentWeapon.attacks.Length - 1)
+                if (i < currentWeapon.actions.Length - 1)
                     sb.AppendLine();
             }
         }
@@ -548,7 +525,8 @@ public class UserManager : MonoBehaviour
         // Initialize attack pattern states for this weapon
         EnsureAttackPatternStates();
 
-        Debug.LogFormat("UserManager: Weapon '{0}' equipped with {1} attacks", 
-            weapon.weaponName, weapon.attacks != null ? weapon.attacks.Length : 0);
+        Debug.LogFormat("UserManager: Weapon '{0}' equipped with {1} actions",
+            weapon.weaponName, weapon.actions != null ? weapon.actions.Length : 0);
     }
+
 }

@@ -3,79 +3,35 @@ using System.Collections.Generic;
 
 public class WeaponManager : MonoBehaviour
 {
-    [Tooltip("List of all available weapons")]
-    [SerializeField] private Weapon[] availableWeapons = new Weapon[0];
-    
-    private Weapon currentWeapon = null;
-    
+    [Tooltip("Weapons available to invoke at the start of a run")]
+    [SerializeField] private List<Weapon> availableWeapons = new List<Weapon>();
+
     void Awake()
     {
-        if (availableWeapons == null || availableWeapons.Length == 0)
-        {
+        if (availableWeapons == null || availableWeapons.Count == 0)
             Debug.LogWarning("WeaponManager: No weapons configured!");
-        }
     }
-    
-    /// <summary>
-    /// Equip a weapon by name
-    /// </summary>
-    public bool EquipWeapon(string weaponName)
-    {
-        if (availableWeapons == null)
-            return false;
-        
-        for (int i = 0; i < availableWeapons.Length; ++i)
-        {
-            if (availableWeapons[i] != null && availableWeapons[i].weaponName == weaponName)
-            {
-                currentWeapon = availableWeapons[i];
-                Debug.LogFormat("WeaponManager: Equipped weapon '{0}'", weaponName);
-                return true;
-            }
-        }
-        
-        Debug.LogWarning("WeaponManager: Weapon '" + weaponName + "' not found!");
-        return false;
-    }
-    
-    /// <summary>
-    /// Get the currently equipped weapon
-    /// </summary>
-    public Weapon GetCurrentWeapon()
-    {
-        return currentWeapon;
-    }
-    
-    /// <summary>
-    /// Check if a weapon is equipped
-    /// </summary>
-    public bool IsWeaponEquipped()
-    {
-        return currentWeapon != null;
-    }
-    
-    /// <summary>
-    /// Get a weapon by name without equipping it
-    /// </summary>
-    public Weapon GetWeaponByName(string weaponName)
-    {
-        if (availableWeapons == null)
-            return null;
-        
-        for (int i = 0; i < availableWeapons.Length; ++i)
-        {
-            if (availableWeapons[i] != null && availableWeapons[i].weaponName == weaponName)
-                return availableWeapons[i];
-        }
-        
-        return null;
-    }
-    
-    /// <summary>
-    /// Get all available weapons
-    /// </summary>
+
     public Weapon[] GetAvailableWeapons()
     {
-        return availableWeapons;
+        return availableWeapons.ToArray();
+    }
+
+    /// <summary>
+    /// Adds a weapon to the available pool (called when loot is picked up during a run).
+    /// </summary>
+    public void AddWeapon(Weapon weapon)
+    {
+        if (weapon == null || availableWeapons.Contains(weapon)) return;
+        availableWeapons.Add(weapon);
+        Debug.LogFormat("WeaponManager: '{0}' added to available weapons", weapon.weaponName);
+    }
+
+    /// <summary>
+    /// Resets the weapon pool to a given starting set (call this at the start of a new run).
+    /// </summary>
+    public void InitRun(List<Weapon> startingWeapons)
+    {
+        availableWeapons = new List<Weapon>(startingWeapons);
     }
 }
