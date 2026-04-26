@@ -14,6 +14,8 @@ MonoBehaviour:
   m_EditorClassIdentifier: Assembly-CSharp::Weapon
   weaponName: Magic Wand
   invocationPattern: 1301000013010000140100001201000011010000140100001201000012010000
-  actions: []
+  actions:
+  - {fileID: 11400000, guid: 569ec3201d4f837419f00942335a10c3, type: 2}
+  - {fileID: 0}
   invocationEndClip: {fileID: 7400000, guid: d52b6ff7ac5a96d47a243d6e93b7372e, type: 2}
   standStillClip: {fileID: 7400000, guid: cbe78230219bbf043a1d323fe2c57d98, type: 2}

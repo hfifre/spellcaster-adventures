@@ -8,5 +8,6 @@ public class DamageAction : WeaponAction
     public override void Execute(Entity caster, Entity target)
     {
         target?.TakeDamage(damage);
+        SpawnEffect(caster, target);
     }
 }

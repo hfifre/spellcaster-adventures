@@ -352,11 +352,7 @@ public class UserManager : MonoBehaviour
 
                     st.lastExecutedTime = Time.time;
 
-                    if (characterAnimator != null)
-                        characterAnimator.PlayAttack(action.actionName);
-
-                    if (action.effectPrefab != null)
-                        TriggerAnimation.Spawn(action.effectPrefab, transform.position, 1.5f);
+                    action.OnPatternComplete(characterAnimator);
 
                     Enemy target = FindFirstObjectByType<Enemy>();
                     action.Execute(playerEntity, target != null ? (Entity)target : null);

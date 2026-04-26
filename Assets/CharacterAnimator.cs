@@ -96,12 +96,23 @@ public class CharacterAnimator : MonoBehaviour
     public void PlayAttack(string attackName = "")
     {
         if (animator == null) return;
-
-        // Force immediate transition to Attack state, ignoring current animation
-        animator.CrossFadeInFixedTime(hashAttack, 0f, 0); // 0 duration = instant transition
-
-        // Note: attackName is reserved for future implementation if you add a string parameter to your Animator
+        animator.CrossFadeInFixedTime(hashAttack, 0f, 0);
         Debug.Log("CharacterAnimator: Playing Attack (" + (string.IsNullOrEmpty(attackName) ? "default" : attackName) + ")");
+    }
+
+    // Override the Attack clip with a weapon-action-specific animation
+    public void SetAttackAnimation(AnimationClip clip)
+    {
+        if (overrideController == null || clip == null) return;
+        foreach (var baseClip in baseController.animationClips)
+        {
+            if (baseClip.name.Contains("Attack"))
+            {
+                overrideController[baseClip] = clip;
+                return;
+            }
+        }
+        Debug.LogWarning("CharacterAnimator: no 'Attack' clip found in base controller to override.");
     }
 
     /// <summary>

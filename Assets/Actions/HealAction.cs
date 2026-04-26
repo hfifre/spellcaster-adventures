@@ -8,5 +8,6 @@ public class HealAction : WeaponAction
     public override void Execute(Entity caster, Entity target)
     {
         caster?.Heal(healAmount);
+        SpawnEffect(caster, target);
     }
 }
