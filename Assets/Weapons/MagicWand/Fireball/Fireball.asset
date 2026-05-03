@@ -16,7 +16,7 @@ MonoBehaviour:
   pattern: 11010000110100001301000012010000
   characterAnimationClip: {fileID: 0}
   effectPrefab: {fileID: 3869548287568962420, guid: 658b95cff9421b44d90dcc0399383b9a, type: 3}
-  spawnOffset: {x: 6, y: 2}
+  spawnOffset: {x: 4.5, y: 1.8}
   effectDuration: 0.9
   cooldownSeconds: 0
   damage: 10

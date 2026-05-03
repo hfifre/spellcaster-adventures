@@ -6,12 +6,14 @@ public class Enemy : Entity
     [SerializeField] private float attackCooldown = 2f;
 
     private PlayerEntity player;
+    private EnemyAnimator enemyAnimator;
     private float lastAttackTime;
 
     protected override void Awake()
     {
         base.Awake();
         player = FindFirstObjectByType<PlayerEntity>();
+        enemyAnimator = GetComponent<EnemyAnimator>();
     }
 
     void Update()
@@ -25,13 +27,24 @@ public class Enemy : Entity
         if (Time.time - lastAttackTime < attackCooldown) return;
         lastAttackTime = Time.time;
         player.TakeDamage(attackDamage);
+        enemyAnimator?.PlayAttack();
         Debug.LogFormat("Enemy '{0}' dealt {1} damage to player", gameObject.name, attackDamage);
+    }
+
+    protected override void OnHealthChanged()
+    {
+        if (IsAlive)
+            enemyAnimator?.PlayHurt();
     }
 
     protected override void Die()
     {
+        enabled = false; // stoppe Update et TryAttack immédiatement
         Debug.LogFormat("Enemy '{0}' died", gameObject.name);
-        // TODO: drop loot
-        Destroy(gameObject);
+
+        if (enemyAnimator != null)
+            enemyAnimator.PlayDeath(() => Destroy(gameObject));
+        else
+            Destroy(gameObject);
     }
 }
