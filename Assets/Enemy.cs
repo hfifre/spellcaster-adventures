@@ -5,6 +5,11 @@ public class Enemy : Entity
     [SerializeField] private float attackDamage = 10f;
     [SerializeField] private float attackCooldown = 2f;
 
+    [Header("Spawn")]
+    [Tooltip("Décalage appliqué par rapport au point de spawn (compense la taille du sprite)")]
+    [SerializeField] private Vector3 spawnOffset = Vector3.zero;
+    public Vector3 SpawnOffset => spawnOffset;
+
     private PlayerEntity player;
     private EnemyAnimator enemyAnimator;
     private float lastAttackTime;

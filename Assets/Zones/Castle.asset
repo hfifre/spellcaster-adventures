@@ -1,0 +1,19 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 73dfea170e11fd84bb19d90f70a3e5b4, type: 3}
+  m_Name: Castle
+  m_EditorClassIdentifier: Assembly-CSharp::ZoneConfig
+  zoneName: Castle
+  difficulty: 1
+  enemyPrefabs:
+  - {fileID: 6981892373355650075, guid: cda7d04800a04e74b89b23b3dcde4adf, type: 3}
+  - {fileID: 7226763213655837703, guid: 7e3acc5d26f9f0144a2bff25851bd90f, type: 3}
