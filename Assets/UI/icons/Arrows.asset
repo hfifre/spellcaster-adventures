@@ -1,0 +1,18 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 8ca5f00cfdbef4049bf42f9394da07cb, type: 3}
+  m_Name: Arrows
+  m_EditorClassIdentifier: Assembly-CSharp::ArrowIconsConfig
+  up: {fileID: 1971738423993067291, guid: 61516f07e4c660243bf0bd8e176c285e, type: 3}
+  down: {fileID: -8273524975305245344, guid: 603af445854d6cf4dbaf2370209bcecd, type: 3}
+  left: {fileID: -3646648088846649019, guid: 7e92e4281d294ad48a505b5f83a65167, type: 3}
+  right: {fileID: -5859064968924809791, guid: f2c752b6a715f6d47b18a1a9d3d50f02, type: 3}

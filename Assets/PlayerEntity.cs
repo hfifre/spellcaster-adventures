@@ -2,19 +2,23 @@ using UnityEngine;
 
 public class PlayerEntity : Entity
 {
-    [SerializeField] private HUDManager hudManager;
+    [SerializeField] private CombatHUD combatHUD;
 
     protected override void Awake()
     {
         base.Awake();
-        if (hudManager == null)
-            hudManager = FindFirstObjectByType<HUDManager>();
+        if (combatHUD == null)
+            combatHUD = FindFirstObjectByType<CombatHUD>();
+    }
+
+    void Start()
+    {
+        combatHUD?.UpdateHealth(currentHealth, maxHealth);
     }
 
     protected override void OnHealthChanged()
     {
-        if (hudManager != null)
-            hudManager.UpdateHealthBar(currentHealth, maxHealth);
+        combatHUD?.UpdateHealth(currentHealth, maxHealth);
     }
 
     protected override void Die()

@@ -1,7 +1,6 @@
 using UnityEngine;
 using UnityEngine.InputSystem;
 using UnityEngine.InputSystem.Utilities;
-using TMPro;
 
 public class UserManager : MonoBehaviour
 {
@@ -10,6 +9,9 @@ public class UserManager : MonoBehaviour
     
     [Tooltip("Reference to the WeaponManager for weapon management.")]
     [SerializeField] private WeaponManager weaponManager;
+
+    [Tooltip("Reference to the CombatHUD for UI updates.")]
+    [SerializeField] private CombatHUD combatHUD;
 
     // Weapon state
     private bool weaponInvoked = false;
@@ -23,31 +25,9 @@ public class UserManager : MonoBehaviour
     [Tooltip("Assign your InputActionAsset (UserActions.inputactions) here. The script will use the 'combat' map and its Up/Down/Left/Right actions.")]
     public InputActionAsset inputActions;
 
-    // Helper function to convert KeyCode to arrow symbol
-    private string KeyCodeToArrowSymbol(KeyCode key)
-    {
-        switch (key)
-        {
-            case KeyCode.UpArrow:
-                return "↑";
-            case KeyCode.DownArrow:
-                return "↓";
-            case KeyCode.LeftArrow:
-                return "←";
-            case KeyCode.RightArrow:
-                return "→";
-            default:
-                return key.ToString();
-        }
-    }
-
     // InputAction references (populated when asset is assigned)
     InputActionMap combatMap;
     System.Collections.Generic.List<InputAction> combatActions = new System.Collections.Generic.List<InputAction>();
-
-    [Header("UI")]
-    [Tooltip("Optional TextMeshPro UI element to display configured sequences and progress.")]
-    public TMP_Text sequenceText;
 
     // Invocation pattern state
     private int invocationIndex = 0;
@@ -57,6 +37,10 @@ public class UserManager : MonoBehaviour
     // Attack patterns state (one per weapon attack)
     class AttackPatternState { public int index; public float lastInputTime; public float lastExecutedTime = -1000f; }
     AttackPatternState[] attackPatternStates = new AttackPatternState[0];
+
+    // Cached arrays for HUD updates (évite les allocations chaque frame)
+    private int[]   cachedPatternIndices = new int[0];
+    private float[] cachedCooldowns      = new float[0];
 
     void Awake()
     {
@@ -95,7 +79,6 @@ public class UserManager : MonoBehaviour
             attackPatternStates = new AttackPatternState[currentWeapon.actions.Length];
             for (int i = 0; i < attackPatternStates.Length; ++i)
                 attackPatternStates[i] = new AttackPatternState() { index = 0, lastInputTime = 0f };
-            UpdateSequenceDisplay();
         }
     }
 
@@ -122,9 +105,10 @@ public class UserManager : MonoBehaviour
                 Debug.Log("Combat started: playing stand still without weapon");
             }
             
-            UpdateSequenceDisplay();
-        } 
-        else 
+            if (combatHUD != null && weaponManager != null)
+                combatHUD.BuildInvocationCards(weaponManager.GetAvailableWeapons());
+        }
+        else
         {
             Debug.LogError("UserManager: No InputActionAsset assigned. Please assign one in the inspector.");
         }
@@ -174,10 +158,29 @@ public class UserManager : MonoBehaviour
             }
         }
 
-        // If no InputActionAsset assigned, display error
-        if (inputActions == null)
+        // Mise à jour HUD chaque frame
+        if (combatHUD != null)
         {
-            Debug.LogError("UserManager: No InputActionAsset assigned. Please assign one in the inspector.");
+            if (!weaponInvoked)
+            {
+                combatHUD.UpdateInvocationCards(currentInvocationWeaponIndex, invocationIndex);
+            }
+            else if (currentWeapon?.actions != null)
+            {
+                int n = currentWeapon.actions.Length;
+                if (cachedPatternIndices.Length != n)
+                {
+                    cachedPatternIndices = new int[n];
+                    cachedCooldowns      = new float[n];
+                }
+                for (int i = 0; i < n; i++)
+                {
+                    cachedPatternIndices[i] = attackPatternStates[i].index;
+                    cachedCooldowns[i]      = Mathf.Max(0f, currentWeapon.actions[i].cooldownSeconds
+                                              - (Time.time - attackPatternStates[i].lastExecutedTime));
+                }
+                combatHUD.UpdateCombatCards(cachedPatternIndices, cachedCooldowns);
+            }
         }
     }
 
@@ -196,7 +199,6 @@ public class UserManager : MonoBehaviour
             HandleAttackPatterns(pressed);
         }
 
-        UpdateSequenceDisplay();
     }
 
     void HandleInvocationPattern(KeyCode pressed)
@@ -400,105 +402,6 @@ public class UserManager : MonoBehaviour
     }
 
 
-    void UpdateSequenceDisplay()
-    {
-        if (sequenceText == null || weaponManager == null)
-            return;
-
-        var sb = new System.Text.StringBuilder();
-
-        if (!weaponInvoked)
-        {
-            // PHASE 1: Show invocation patterns
-            sb.AppendLine("<color=#FF6600><b>WEAPON NOT INVOKED</b></color>");
-            sb.AppendLine("Complete an invocation sequence to proceed:");
-            sb.AppendLine();
-
-            Weapon[] weapons = weaponManager.GetAvailableWeapons();
-            if (weapons == null || weapons.Length == 0)
-            {
-                sequenceText.text = "(no weapons available)";
-                return;
-            }
-
-            for (int w = 0; w < weapons.Length; ++w)
-            {
-                Weapon weapon = weapons[w];
-                if (weapon == null || weapon.invocationPattern == null || weapon.invocationPattern.Length == 0)
-                    continue;
-
-                sb.Append(weapon.weaponName);
-                sb.Append(" <i>(Invocation)</i>: ");
-
-                for (int j = 0; j < weapon.invocationPattern.Length; ++j)
-                {
-                    // Only highlight if this is the weapon currently being followed AND this is the next key
-                    bool isNext = (currentInvocationWeaponIndex == w && invocationIndex == j);
-                    if (isNext)
-                        sb.Append("<color=#FFFF00><b>");
-
-                    sb.Append(KeyCodeToArrowSymbol(weapon.invocationPattern[j]));
-
-                    if (isNext)
-                        sb.Append("</b></color>");
-                }
-
-                if (w < weapons.Length - 1)
-                    sb.AppendLine();
-            }
-        }
-        else
-        {
-            // PHASE 2: Show attack patterns
-            sb.AppendLine("<color=#00FF00><b>WEAPON INVOKED</b></color>");
-            if (currentWeapon != null)
-                sb.AppendLine("Weapon: <b>" + currentWeapon.weaponName + "</b>");
-            sb.AppendLine("Cast attacks/spells using sequences:");
-            sb.AppendLine();
-
-            if (currentWeapon == null || currentWeapon.actions == null || currentWeapon.actions.Length == 0)
-            {
-                sequenceText.text = "(no actions configured for this weapon)";
-                return;
-            }
-
-            for (int i = 0; i < currentWeapon.actions.Length; ++i)
-            {
-                WeaponAction action = currentWeapon.actions[i];
-                if (action == null || action.pattern == null || action.pattern.Length == 0)
-                    continue;
-
-                sb.Append(action.actionName);
-                sb.Append(": ");
-
-                for (int j = 0; j < action.pattern.Length; ++j)
-                {
-                    bool isNext = (attackPatternStates != null && i < attackPatternStates.Length &&
-                                   attackPatternStates[i] != null && attackPatternStates[i].index == j);
-                    if (isNext)
-                        sb.Append("<color=#FFFF00><b>");
-
-                    sb.Append(KeyCodeToArrowSymbol(action.pattern[j]));
-
-                    if (isNext)
-                        sb.Append("</b></color>");
-                }
-
-                if (action.cooldownSeconds > 0f)
-                {
-                    float timeLeft = action.cooldownSeconds - (Time.time - attackPatternStates[i].lastExecutedTime);
-                    if (timeLeft > 0f)
-                        sb.Append("  <color=#FF0000>[" + timeLeft.ToString("F1") + "s]</color>");
-                }
-
-                if (i < currentWeapon.actions.Length - 1)
-                    sb.AppendLine();
-            }
-        }
-
-        sequenceText.text = sb.ToString();
-    }
-
     /// <summary>
     /// Equip a weapon and load its attacks/animations
     /// </summary>
@@ -520,6 +423,8 @@ public class UserManager : MonoBehaviour
 
         // Initialize attack pattern states for this weapon
         EnsureAttackPatternStates();
+
+        combatHUD?.BuildCombatCards(weapon.actions);
 
         Debug.LogFormat("UserManager: Weapon '{0}' equipped with {1} actions",
             weapon.weaponName, weapon.actions != null ? weapon.actions.Length : 0);
