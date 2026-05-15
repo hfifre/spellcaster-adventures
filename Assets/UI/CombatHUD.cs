@@ -35,7 +35,7 @@ public class CombatHUD : MonoBehaviour
         for (int i = 0; i < weapons.Length; i++)
         {
             var card = CreateCard();
-            card.Setup(weapons[i].weaponName, weapons[i].invocationPattern, arrowConfig);
+            card.Setup(weapons[i].weaponName, weapons[i].description, weapons[i].invocationPattern, arrowConfig);
             cards[i] = card;
         }
     }
@@ -57,7 +57,7 @@ public class CombatHUD : MonoBehaviour
         for (int i = 0; i < actions.Length; i++)
         {
             var card = CreateCard();
-            card.Setup(actions[i].actionName, actions[i].pattern, arrowConfig);
+            card.Setup(actions[i].actionName, actions[i].description, actions[i].pattern, arrowConfig);
             cards[i] = card;
         }
     }

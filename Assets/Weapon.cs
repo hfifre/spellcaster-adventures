@@ -5,6 +5,8 @@ public class Weapon : ScriptableObject
 {
     [Header("Weapon Info")]
     public string weaponName = "Sword";
+    [TextArea(1, 3)]
+    public string description = "";
 
     [Header("Invocation")]
     [Tooltip("Pattern to invoke this weapon")]

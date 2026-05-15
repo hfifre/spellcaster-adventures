@@ -5,6 +5,7 @@ using TMPro;
 public class ActionCardUI : MonoBehaviour
 {
     [SerializeField] private TMP_Text labelText;
+    [SerializeField] private TMP_Text descriptionText;
     [SerializeField] private Transform arrowsContainer;
     [SerializeField] private GameObject cooldownOverlay;
     [SerializeField] private TMP_Text cooldownText;
@@ -15,9 +16,10 @@ public class ActionCardUI : MonoBehaviour
 
     private Image[] arrowImages;
 
-    public void Setup(string label, KeyCode[] pattern, ArrowIconsConfig config)
+    public void Setup(string label, string description, KeyCode[] pattern, ArrowIconsConfig config)
     {
         if (labelText) labelText.text = label;
+        if (descriptionText) descriptionText.text = description;
 
         foreach (Transform child in arrowsContainer)
             Destroy(child.gameObject);

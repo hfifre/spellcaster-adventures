@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: MagicWand
   m_EditorClassIdentifier: Assembly-CSharp::Weapon
   weaponName: Magic Wand
+  description: Magic damages with differents elements
   invocationPattern: 1301000013010000140100001201000011010000140100001201000012010000
   actions:
   - {fileID: 11400000, guid: 569ec3201d4f837419f00942335a10c3, type: 2}

@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: IceSpike
   m_EditorClassIdentifier: Assembly-CSharp::DamageAction
   actionName: Action
+  description: 4 damages - 30% chance to slow target
   pattern: 140100001301000011010000
   characterAnimationClip: {fileID: 0}
   effectPrefab: {fileID: 6391676606886442025, guid: 51dce6a9c574e7a42924d90b83b132ef, type: 3}

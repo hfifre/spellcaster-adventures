@@ -4,6 +4,8 @@ public abstract class WeaponAction : ScriptableObject
 {
     [Header("Action Info")]
     public string actionName = "Action";
+    [TextArea(1, 3)]
+    public string description = "";
 
     [Header("Input")]
     public KeyCode[] pattern = new KeyCode[0];

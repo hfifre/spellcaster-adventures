@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: DoubleDaggers
   m_EditorClassIdentifier: Assembly-CSharp::Weapon
   weaponName: Double daggers
+  description: Quick attacks and melee damages
   invocationPattern: 1101000012010000110100001401000014010000130100001201000014010000
   actions: []
   invocationEndClip: {fileID: 7400000, guid: b5746279423cdaf47b1e1f61b7b2aabd, type: 2}

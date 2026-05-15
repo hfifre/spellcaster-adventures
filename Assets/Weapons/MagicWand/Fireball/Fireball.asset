@@ -13,6 +13,7 @@ MonoBehaviour:
   m_Name: Fireball
   m_EditorClassIdentifier: Assembly-CSharp::DamageAction
   actionName: Fireball
+  description: 10 damages - 25% chance to burn target
   pattern: 11010000110100001301000012010000
   characterAnimationClip: {fileID: 0}
   effectPrefab: {fileID: 3869548287568962420, guid: 658b95cff9421b44d90dcc0399383b9a, type: 3}
