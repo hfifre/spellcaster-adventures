@@ -415,13 +415,11 @@ public class UserManager : MonoBehaviour
 
         currentWeapon = weapon;
 
-        // Setup character animations for this weapon
         if (characterAnimator != null)
-        {
             characterAnimator.SetupWeaponAnimations(weapon);
-        }
 
-        // Initialize attack pattern states for this weapon
+        GetComponent<MeleeDashEffect>()?.SetWeapon(weapon);
+
         EnsureAttackPatternStates();
 
         combatHUD?.BuildCombatCards(weapon.actions);

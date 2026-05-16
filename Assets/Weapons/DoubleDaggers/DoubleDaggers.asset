@@ -15,6 +15,9 @@ MonoBehaviour:
   weaponName: Double daggers
   description: Quick attacks and melee damages
   invocationPattern: 1101000012010000110100001401000014010000130100001201000014010000
-  actions: []
+  actions:
+  - {fileID: 11400000, guid: 81eb90d0907a4004a82b7c0f9783d560, type: 2}
   invocationEndClip: {fileID: 7400000, guid: b5746279423cdaf47b1e1f61b7b2aabd, type: 2}
   standStillClip: {fileID: 7400000, guid: c2b2788c3705b0e4cbb871b1405bbf31, type: 2}
+  meleeDashClip: {fileID: 7400000, guid: 1450b215b322db84aa01e8db5c217f25, type: 2}
+  meleeReturnClip: {fileID: 7400000, guid: 1450b215b322db84aa01e8db5c217f25, type: 2}

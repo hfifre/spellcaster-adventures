@@ -22,4 +22,10 @@ public class Weapon : ScriptableObject
 
     [Tooltip("Animation clip for idle with this weapon")]
     public AnimationClip standStillClip;
+
+    [Tooltip("Animation pendant le dash d'approche (corps à corps)")]
+    public AnimationClip meleeDashClip;
+
+    [Tooltip("Animation pendant le retour après l'attaque (corps à corps)")]
+    public AnimationClip meleeReturnClip;
 }

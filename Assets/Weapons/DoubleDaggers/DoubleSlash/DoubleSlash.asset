@@ -1,0 +1,25 @@
+%YAML 1.1
+%TAG !u! tag:unity3d.com,2011:
+--- !u!114 &11400000
+MonoBehaviour:
+  m_ObjectHideFlags: 0
+  m_CorrespondingSourceObject: {fileID: 0}
+  m_PrefabInstance: {fileID: 0}
+  m_PrefabAsset: {fileID: 0}
+  m_GameObject: {fileID: 0}
+  m_Enabled: 1
+  m_EditorHideFlags: 0
+  m_Script: {fileID: 11500000, guid: 9b92945ce95a87749890d184a458ef13, type: 3}
+  m_Name: DoubleSlash
+  m_EditorClassIdentifier: Assembly-CSharp::MeleeAction
+  actionName: Double Slash
+  description: 2 X 3 damages - 5% chance to inflinct bleeding on each hit
+  pattern: 11010000140100001301000011010000
+  characterAnimationClip: {fileID: 7400000, guid: cf203a6f3fa0c2b45a7b271eea6a5cab, type: 2}
+  effectPrefab: {fileID: 0}
+  spawnOffset: {x: 0, y: 0}
+  effectDuration: 1
+  cooldownSeconds: 2
+  damage: 15
+  dashSpeed: 15
+  stopDistance: 0.4
