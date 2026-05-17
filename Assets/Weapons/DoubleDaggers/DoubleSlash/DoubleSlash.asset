@@ -19,6 +19,7 @@ MonoBehaviour:
   effectPrefab: {fileID: 0}
   spawnOffset: {x: 0, y: 0}
   effectDuration: 1
+  impactDelay: 0.07
   cooldownSeconds: 2
   damage: 15
   dashSpeed: 15
