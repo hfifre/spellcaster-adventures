@@ -16,7 +16,7 @@ public class MeleeAction : WeaponAction
         if (target == null) return;
         var dash = caster.GetComponent<MeleeDashEffect>();
         if (dash != null)
-            dash.StartDash(target, damage, dashSpeed, stopDistance, characterAnimationClip);
+            dash.StartDash(target, damage, dashSpeed, stopDistance, characterAnimationClip, impactDelay);
         else
             Debug.LogWarning("MeleeAction: MeleeDashEffect not found on caster.");
     }

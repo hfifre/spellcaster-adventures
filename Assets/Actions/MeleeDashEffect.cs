@@ -10,13 +10,13 @@ public class MeleeDashEffect : MonoBehaviour
 
     public void SetWeapon(Weapon weapon) => currentWeapon = weapon;
 
-    public void StartDash(Entity target, float damage, float dashSpeed, float stopDistance, AnimationClip attackClip)
+    public void StartDash(Entity target, float damage, float dashSpeed, float stopDistance, AnimationClip attackClip, float impactDelay = 0f)
     {
         if (isDashing || target == null) return;
-        StartCoroutine(DashRoutine(target, damage, dashSpeed, stopDistance, attackClip));
+        StartCoroutine(DashRoutine(target, damage, dashSpeed, stopDistance, attackClip, impactDelay));
     }
 
-    IEnumerator DashRoutine(Entity target, float damage, float dashSpeed, float stopDistance, AnimationClip attackClip)
+    IEnumerator DashRoutine(Entity target, float damage, float dashSpeed, float stopDistance, AnimationClip attackClip, float impactDelay)
     {
         isDashing = true;
         var anim = GetComponent<CharacterAnimator>();
@@ -40,10 +40,12 @@ public class MeleeDashEffect : MonoBehaviour
         }
         transform.position = destination;
 
-        // Phase 2 — impact
-        target.TakeDamage(damage);
+        // Phase 2 — impact : animation immédiate, dégâts après impactDelay
         if (attackClip != null) { anim?.SetAttackAnimation(attackClip); anim?.PlayAttack(""); }
-        yield return new WaitForSeconds(attackClip != null ? attackClip.length : 0.3f);
+        if (impactDelay > 0f) yield return new WaitForSeconds(impactDelay);
+        target.TakeDamage(damage);
+        float postImpactWait = Mathf.Max(0f, (attackClip != null ? attackClip.length : 0.3f) - impactDelay);
+        if (postImpactWait > 0f) yield return new WaitForSeconds(postImpactWait);
 
         // Phase 3 — retour
         var returnClip = currentWeapon?.meleeReturnClip;

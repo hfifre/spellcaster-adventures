@@ -50,6 +50,7 @@ MonoBehaviour:
   maxHealth: 100
   attackDamage: 3
   attackCooldown: 2
+  spawnOffset: {x: 0, y: 0, z: 0}
 --- !u!114 &4787159299252304441
 MonoBehaviour:
   m_ObjectHideFlags: 0

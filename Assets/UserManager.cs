@@ -357,7 +357,12 @@ public class UserManager : MonoBehaviour
                     action.OnPatternComplete(characterAnimator);
 
                     Enemy target = FindFirstObjectByType<Enemy>();
-                    action.Execute(playerEntity, target != null ? (Entity)target : null);
+                    Entity targetEntity = target != null ? (Entity)target : null;
+                    action.Execute(playerEntity, targetEntity);
+                    if (action.impactDelay > 0f)
+                        StartCoroutine(DelayedImpact(action, playerEntity, targetEntity, action.impactDelay));
+                    else
+                        action.OnImpact(playerEntity, targetEntity);
 
                     st.index = 0;
                     return;
@@ -401,6 +406,12 @@ public class UserManager : MonoBehaviour
         }
     }
 
+
+    System.Collections.IEnumerator DelayedImpact(WeaponAction action, Entity caster, Entity target, float delay)
+    {
+        yield return new WaitForSeconds(delay);
+        action.OnImpact(caster, target);
+    }
 
     /// <summary>
     /// Equip a weapon and load its attacks/animations

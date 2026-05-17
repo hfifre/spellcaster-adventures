@@ -20,10 +20,13 @@ public abstract class WeaponAction : ScriptableObject
     [Tooltip("Durée avant destruction de l'effet s'il n'a pas de SpellEffect")]
     public float effectDuration = 2f;
 
-    [Header("Cooldown")]
+    [Header("Timing")]
+    [Tooltip("Délai en secondes avant que les dégâts/effets soient appliqués (ex: temps de trajectoire d'un projectile)")]
+    public float impactDelay = 0f;
     public float cooldownSeconds = 0f;
 
     public abstract void Execute(Entity caster, Entity target);
+    public virtual void OnImpact(Entity caster, Entity target) { }
 
     /// <summary>
     /// Appelé par UserManager quand le paterne est complété.
