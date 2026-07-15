@@ -429,8 +429,6 @@ public class UserManager : MonoBehaviour
         if (characterAnimator != null)
             characterAnimator.SetupWeaponAnimations(weapon);
 
-        GetComponent<MeleeDashEffect>()?.SetWeapon(weapon);
-
         EnsureAttackPatternStates();
 
         combatHUD?.BuildCombatCards(weapon.actions);

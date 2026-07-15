@@ -31,7 +31,7 @@ public abstract class WeaponAction : ScriptableObject
     /// <summary>
     /// Appelé par UserManager quand le paterne est complété.
     /// Par défaut joue l'animation d'attaque. Les sous-classes peuvent override
-    /// pour gérer leur propre timing (ex. MeleeAction gère l'anim dans MeleeDashEffect).
+    /// pour gérer leur propre timing.
     /// </summary>
     public virtual void OnPatternComplete(CharacterAnimator animator)
     {
